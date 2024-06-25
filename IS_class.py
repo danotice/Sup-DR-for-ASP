@@ -15,7 +15,6 @@ from sklearn.metrics import accuracy_score, precision_score, f1_score, recall_sc
 
 
 import pyispace
-#import lol
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -251,7 +250,6 @@ def pilot_CVy(X,Y,skf,scale,return_best, return_errors):
                     'Ytrain':Ytrain_errors, 'Ytest':Ytest_errors}
     
     
-# TODO - modify so PlotProj has a filler column in case Best not added
 class InstanceSpace():
     
     def __init__(self):
@@ -407,133 +405,7 @@ class InstanceSpace():
         elif type=="feat":
             pass
 
-    # 2D Plots
-    def plots2D(self, methods, shape, hue=None, save=''):
-        """Plots 2D projections of the instance space.
-
-        Args:
-            methods (list): list of methods to plot
-            shape (tuple): shape of the subplot grid
-            hue (str, optional): column name in PlotProj to use for coloring. Defaults to None.
-        """
-        #self.PlotProj.set_index('name',inplace=True)
-
-        if methods == 'all':
-            methods = list(self.projections.keys())
-
-        plt.figure(figsize=(4*shape[1],3*shape[0]))
-        
-        for i, method in enumerate(methods):
-            if method not in self.projections:
-                print(f"{method} projection not available")
-                continue
-            
-            plt.subplot(shape[0],shape[1],i+1)      
-            ax = self.proj[method]      
-
-            if len(ax) < 2:
-                if hue == None:
-                    sns.scatterplot(y=[0]*self.n,x=ax[0], data=self.PlotProj, alpha=0.5)
-                    plt.title(method)
-                    continue
-                elif hue == 'Best':
-                    # densiy plot grouped by best algorithm
-                    sns.kdeplot(x=ax[0],data=self.PlotProj, hue='Best',fill=True)
-                    plt.title(method)
-                    continue
-                else:
-                    # plot ax vs hue
-                    sns.scatterplot(x=ax[0],y=hue, data=self.PlotProj, alpha=0.5)
-                    plt.title(method)
-                    continue
-
-
-            if i < len(methods)-1:
-                sns.scatterplot(x=ax[0],y=ax[1],hue=hue, data=self.PlotProj, alpha=0.5, legend=False)
-            
-            else:
-                sns.scatterplot(x=ax[0],y=ax[1],hue=hue, data=self.PlotProj, alpha=0.5)
-                # legend outside plot to right
-                plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), title=hue)
-        
-            plt.title(method)
-            plt.xlabel('Z1')
-            plt.ylabel('Z2')
-
-        plt.subplots_adjust(wspace=0.25, hspace=0.4)
-        plt.show()
-
-        if save != '':
-            plt.savefig(save, bbox_inches='tight')
-
-    def plots2D_det(self, methods, shape,size,titles=[],keytitle='',suptitle='', hue=None, save=''):
-        """Plots 2D projections of the instance space.
-
-        Args:
-            methods (list): list of methods to plot
-            shape (tuple): shape of the subplot grid
-            hue (str, optional): column name in PlotProj to use for coloring. Defaults to None.
-        """
-        #self.PlotProj.set_index('name',inplace=True)
-
-        if methods == 'all':
-            methods = list(self.projections.keys())
-
-        plt.figure(figsize=(size[0],size[1]))
-
-        if len(titles) != len(methods):
-            print('suitable titles not provided')
-            titles = methods
-        
-        
-        for i, method in enumerate(methods):
-            if method not in self.projections:
-                print(f"{method} projection not available")
-                continue
-            
-            plt.subplot(shape[0],shape[1],i+1)      
-            ax = self.proj[method]      
-
-            if len(ax) < 2:
-                if hue == None:
-                    sns.scatterplot(y=[0]*self.n,x=ax[0], data=self.PlotProj, alpha=0.5)
-                    plt.title(titles[i])
-                    continue
-                elif hue == 'Best':
-                    # densiy plot grouped by best algorithm
-                    sns.kdeplot(x=ax[0],data=self.PlotProj, hue='Best',fill=True)
-                    plt.title(titles[i])
-                    continue
-                else:
-                    # plot ax vs hue
-                    sns.scatterplot(x=ax[0],y=hue, data=self.PlotProj, alpha=0.5)
-                    plt.title(titles[i])
-                    continue
-
-
-            if i < len(methods)-1:
-                sns.scatterplot(x=ax[0],y=ax[1],hue=hue, data=self.PlotProj, alpha=0.5, legend=False)
-            
-            else:
-                sns.scatterplot(x=ax[0],y=ax[1],hue=hue, data=self.PlotProj, alpha=0.5)
-                # legend outside plot to right
-                plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), 
-                           title=hue if keytitle == '' else keytitle)
-        
-            plt.title(titles[i])
-            plt.xlabel('Z1')
-            plt.ylabel('Z2')
-
-        plt.subplots_adjust(wspace=0.25, hspace=0.4)
-        if suptitle != '':
-            plt.suptitle(suptitle,fontsize='x-large',fontweight='bold')
-
-        plt.show()
-
-        if save != '':
-            plt.savefig(save, bbox_inches='tight')
-
-
+    
     # adding projections
     def PCA(self, n_components=None):
         """Fit PCA and add 2 dimensional projection to PlotProj. 
@@ -608,27 +480,6 @@ class InstanceSpace():
 
         print(f"PLSR projection added with {n_components} dimensions.")
 
-    def PLSC(self, n_components = None):
-
-        if n_components is None:
-            n_components = self.a
-            name = 'PLSC'
-        else:
-            name = f'PLSCn{n_components}'
-
-        plsc = cross_decomposition.PLSCanonical(n_components=n_components, scale=False)
-        plsc.fit(self.X_s, self.Y_s)
-
-        comps = [f'{name}_{i+1}' for i in range(n_components)]
-        self.PlotProj = pd.concat(
-            [self.PlotProj, 
-             pd.DataFrame(plsc.transform(self.X_s), columns=comps, index=self.PlotProj.index)], 
-             axis=1)
-
-        self.projections[name] = plsc
-        self.proj[name] = comps
-
-        print(f"PLSC projection added with {n_components} dimensions.")
 
     def PLSDA(self, n_components = None, method='r'):
 
@@ -854,8 +705,6 @@ class InstanceSpace():
         best_d = cv_scores[measures].rank(ascending=False).mean(axis=1).idxmin()
         return {'scores':cv_scores, 'best_d':best_d}
 
-             
-             
             
     def fit_and_eval_cv(self, proj_name, K, strat,
                 n_comps=None, max_it=5000,plsda_method='r',print_=False):
@@ -994,9 +843,7 @@ class InstanceSpace():
         by_measure = scores[measures].idxmax(axis=0)
 
         return n_best, by_measure
-        
-
-
+    
     def eval_projections(self, proj_name, K, dim=0, w=None):
 
         proj = self.PlotProj[self.proj[proj_name]]
@@ -1022,8 +869,6 @@ class InstanceSpace():
             metrics[f'neighbourhood_hit_rel_k{k}'] = self.neighbourhood_hit(proj, k, rel=True, dist=(D_high, D_low))
 
         return metrics
-        
-
     
     def intrinsic_dim_ratio(self):
 
@@ -1161,104 +1006,7 @@ class InstanceSpace():
         # goodness
         return stats.spearmanr(D_high, D_low, axis=None)[0]
 
-            
-def matildaTSP_IS():
-    matildaTSP = pd.read_csv('./TSP data/matilda metadata.csv',index_col=0)
-    
-    TSP1 = InstanceSpace()
-    TSP1.fromMetadata(matildaTSP)
-    
-    bestExp = lambda x: 'ANY' if abs(x.algo_CLK_Mean_Effort - x.algo_LKCC_Mean_Effort) < 1e-3 else ('CLK' if x.algo_CLK_Mean_Effort < x.algo_LKCC_Mean_Effort else 'LKCC')
-    TSP1.getBest(bestExp,axis=1)
-    
-    #TSP1.initPlotData('best')
-
-    # Projections
-    TSP1.PCA()
-    TSP1.PILOT(suffix='_a')
-    TSP1.PILOT(analytic=False,ntries=5,suffix='_n')
-
-    # Plots
-    TSP1.plots2D(['PCA','PILOT_a','PILOT_n'],(1,3))
-    return TSP1
-
-def data_IS(datapath, prefixes=['feature_','algo_'],best=None):
-    metadata = pd.read_csv(datapath,index_col=0)
-    
-    IS1 = InstanceSpace()
-    IS1.fromMetadata(metadata,prefixes)
-    
-    if best != None:
-        IS1.getBest(best,axis=1)
-        #IS1.initPlotData('best')
-    
-    # Projections
-    IS1.PCA()
-    IS1.PILOT(suffix='_a')
-    IS1.PILOT(analytic=False,ntries=5,suffix='_n')
-
-    # Plots
-    IS1.plots2D(['PCA','PILOT_a','PILOT_n'],(1,3))
-    return IS1
-
-
-
-matildaTSP = pd.read_csv('./TSP data/matilda metadata.csv',index_col=0)
-TSP_abs = InstanceSpace()
-TSP_abs.fromMetadata(matildaTSP)
-
-X = TSP_abs.X_s
-Y = TSP_abs.Y_s
-
-# PLS 
-def pls(X,Y,d):
-
-    r = 0
-    Xs = list()
-    Ys = list()
-    us = list()
-    vs = list()
-    Gammas = list()
-    Tildes = list()
-    Omegas = list()
-    Xhats = list()
-    Yhats = list()
-
-    # step 2
-    Xs.append(np.mat(X))
-    Ys.append(np.mat(Y))
-
-    while r < d or (np.abs(Xs[r].T @ Ys[r]) > 10e-4).any():
-        # step 3
-        U,_,V = np.linalg.svd(Xs[r].T @ Ys[r])
-        us.append(U[0].T) # first column of U
-        vs.append(V[0].T)
-
-        # step 4
-        Tildes.append(Xs[r] @ us[r])
-        Omegas.append(Ys[r] @ vs[r])
-
-        # step 5
-        Gammas.append((Tildes[r].T @ Xs[r])/(Tildes[r].T @ Tildes[r])[0,0])
-        Xhats.append(Tildes[r] @ Gammas[r])
-        Yhats.append((Omegas[r] @ Omegas[r].T @ Ys[r])/(Omegas[r].T @ Omegas[r])[0,0])
-
-        # step 6
-        Xs.append(Xs[r] - Xhats[r])
-        Ys.append(Ys[r] - Yhats[r])
-
-        # step 7
-        r += 1
-
-    # us to 2d array
-    Us = np.array(us).reshape(len(us),-1).T
-    Gammas = np.array(Gammas).reshape(len(Gammas),-1) #already T
-    
-    # P - projection matrix (rotation of X)
-    P = Us @ np.linalg.inv(Gammas @ Us)
-
-    return P
-
+ 
 if __name__ == "__main__":
     
    pass
